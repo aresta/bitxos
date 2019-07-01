@@ -1,1 +1,0 @@
-olakease = lambda: 'olakease mon!'

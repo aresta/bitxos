@@ -12,6 +12,6 @@ pycodestyle = "*"
 python_version = "3.7"
 
 [scripts]
-lint = "pycodestyle bitxos tests"
+lint = "pycodestyle --ignore=W2,W3,E501 bitxos tests"
 test = "python -m unittest discover"
 
