@@ -1,5 +1,4 @@
-import consts
-
+import bitxos.consts as consts
 
 class Land():
     def __init__(self):

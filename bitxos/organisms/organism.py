@@ -19,12 +19,12 @@ class Organism:
     @property
     def size(self):
         """ returns the size in cms """
-        return self.genoma.size
+        return self.genoma.genes['size']
 
     @property
     def weight(self):
         """ returns the weight in grams """
-        return self.genoma.size * self.genoma.density
+        return self.genoma.genes['size'] * self.genoma.genes['density']
 
     @classmethod
     def getRandom(cls):
