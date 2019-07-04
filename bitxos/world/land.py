@@ -1,5 +1,6 @@
 import bitxos.consts as consts
 
+
 class Land():
     def __init__(self):
         self.width = consts.WORLD_WIDTH
