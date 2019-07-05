@@ -3,6 +3,7 @@ import math
 import collections
 import bitxos.consts as consts
 import bitxos.neurons.vision as vision
+import bitxos.neurons.action as action
 from bitxos.genomes.genoma import Genoma
 from bitxos.world.world import World
 
@@ -10,15 +11,13 @@ from bitxos.world.world import World
 class Organism:
     def __init__(self):
         self.genoma = None
-        self.energy = None
-        self.damage = 0
-
         self.x = 0
         self.y = 0
-
-        self.born_at = None
+        self.energy = None
+        self.damage = 0
+        self.age = 0
         self.last_fight_at = None
-        self.state_record = []
+        self.memory = []
 
     @property
     def size(self):
@@ -29,6 +28,11 @@ class Organism:
     def weight(self):
         """returns the weight in grams"""
         return self.genoma.genes.weight
+
+    @property
+    def state(self):
+        """returns the internal state of the organism at this moment in its life, except memory"""
+        return (self.energy, self.damage, self.age, self.last_fight_at)
 
     def __repr__(self):
         return "<x=%s y=%s>" % (self.x, self.y)
@@ -41,7 +45,7 @@ class Organism:
         new_organism.energy = new_organism.weight // random.randint(3, 4)
         new_organism.x = random.randint(0, consts.WORLD_WIDTH)
         new_organism.y = random.randint(0, consts.WORLD_HEIGHT)
-        new_organism.born_at = World.time
+        new_organism.age = 0
         return new_organism
 
     def get_clone(self):
@@ -66,7 +70,7 @@ class Organism:
         self.energy -= new_organism.energy
         new_organism.x = self.x + random.randint(-10, 10)  # TODO: think about this 
         new_organism.y = self.y + random.randint(-10, 10)  # TODO: think about this
-        new_organism.born_at = World.time
+        new_organism.age = 0
         return new_organism
 
     def distance(self, organism):
@@ -82,7 +86,6 @@ class Organism:
         organism_in_quadrants_far = self._classify_in_quadrants(orgs_far)
         quadrants_near = [vision.quadrant_analysis(q, None) for q in organism_in_quadrants_near]
         quadrants_far = [vision.quadrant_analysis(q, None) for q in organism_in_quadrants_far]
-        print(quadrants_near)
 
         return quadrants_near, quadrants_far
 
@@ -90,11 +93,13 @@ class Organism:
         """Returns the next action to do based in the situation in the quadrants around and in the current internal state.
            Returns also the new state.
         """
+        q_near, q_far = random_organism.get_quadrants_view()
+        action, new_state = action.get_actions(q_near, q_far, self.state, self.memory)
         return
         
     def _classify_in_quadrants(self, orgs):
         q_N, q_NE, q_E, q_SE, q_S, q_SW, q_NW, q_W = [], [], [], [], [], [], [], []
-        for o in orgs:
+        for o in orgs:  # TODO: improve...
             if o.y >= self.y:
                 if o.x >= self.x:
                     if (o.y - self.y) >= (o.x - self.x):

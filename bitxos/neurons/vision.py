@@ -26,6 +26,3 @@ def quadrant_analysis(quadrant, network):
     return quadrant
 
 
-# def view_analysis(quadrant, network):  # TODO: move to actions?
-#     """Neural network to analyze all quadrants around the organism"""
-#     pass
