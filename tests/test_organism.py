@@ -26,9 +26,21 @@ class OrganismTestCase(unittest.TestCase):
     def test_quadrants(self):
         w = World.getWorld()
         last_organism = Organism.get_random()
-        for i in range(20):
+        for _ in range(40):
             w.organisms.append(last_organism)
-            last_organism = last_organism.get_mutated_copy()
+            last_organism = last_organism.get_random()
         o1, o2 = last_organism.get_quadrants_view()
+        print("quads", o1,o2)
         self.assertIsNotNone(o1)
         self.assertIsNotNone(o2)
+
+    def test_actions(self):
+        w = World.getWorld()
+        last_organism = Organism.get_random()
+        for _ in range(500):
+            w.organisms.append(last_organism)
+            last_organism = last_organism.get_random()
+        acts, st = last_organism.get_actions()
+        self.assertIsNotNone(acts)
+        self.assertIsNotNone(st)
+

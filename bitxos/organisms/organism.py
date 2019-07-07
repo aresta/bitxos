@@ -1,6 +1,5 @@
 import random
 import math
-import collections
 import bitxos.consts as consts
 import bitxos.neurons.vision as vision
 import bitxos.neurons.action as action
@@ -57,7 +56,7 @@ class Organism:
     def get_mutated_copy(self, rate=1):
         """Returns a new created organism with same genoma but mutated.
 
-            rate -- 1: basic small change, 2:bigger, etc 
+            rate -- 1: basic small change, 2:bigger, etc
         """
         new_organism = self._create_new_organism_body()
         new_organism.genoma = self.genoma.get_mutated_copy()
@@ -81,22 +80,24 @@ class Organism:
         """Returns 16 quadrants: 8 near + 8 far areas, each with a tuple of its elements"""
         world = World.getWorld()
         orgs_near, orgs_far = world.get_organism_at_distances(self, 20, 200)
-
+        
         organism_in_quadrants_near = self._classify_in_quadrants(orgs_near)
         organism_in_quadrants_far = self._classify_in_quadrants(orgs_far)
         quadrants_near = [vision.quadrant_analysis(q, None) for q in organism_in_quadrants_near]
         quadrants_far = [vision.quadrant_analysis(q, None) for q in organism_in_quadrants_far]
-
+        
         return quadrants_near, quadrants_far
 
-    def get_action(self, quadrants_near, quadrants_far):
+    def get_actions(self):
         """Returns the next action to do based in the situation in the quadrants around and in the current internal state.
            Returns also the new state.
         """
-        q_near, q_far = random_organism.get_quadrants_view()
-        action, new_state = action.get_actions(q_near, q_far, self.state, self.memory)
-        return
-        
+        q_near, q_far = self.get_quadrants_view()
+        # print("q_near", q_near)
+        # print("q_far", q_far)
+        actions, new_state = action.get_actions(q_near, q_far, self.state, self.memory)
+        return [], []
+
     def _classify_in_quadrants(self, orgs):
         q_N, q_NE, q_E, q_SE, q_S, q_SW, q_NW, q_W = [], [], [], [], [], [], [], []
         for o in orgs:  # TODO: improve...
