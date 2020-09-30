@@ -4,7 +4,7 @@ from bitxos.world.land import Land
 
 class World:
     
-    time = 0  # Universal time in ticks, shares with all organisms
+    time = 0  # Universal time in ticks, shared with all organisms
     world = None
 
     def __init__(self):
@@ -17,18 +17,12 @@ class World:
             cls.world = World()
         return cls.world
 
-    def get_organism_at_distances(self, organism, dist_1, dist_2):
-        """Returns 2 lists of organism:
-            - from 1 to dist_1
-            - from dist_1 to dist_2
-        """
-        orgs_1, orgs_2 = [], []
+    def get_organism_at_distance(self, organism, dist):
+        """Returns lists of (organism, distance) at distance less than dist"""
+        orgs = []
         for org in self.organisms:
-            if org == organism:
-                continue
-            dist = org.distance(organism)
-            if 1 <= dist <= dist_1:
-                orgs_1.append(org)
-            elif dist <= dist_2:
-                orgs_2.append(org)
-        return orgs_1, orgs_2
+            if org == organism: continue
+            org_distance = org.distance(organism)
+            if org_distance < dist:
+                orgs.append((org, org_distance))
+        return orgs

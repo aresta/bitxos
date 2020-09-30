@@ -5,6 +5,9 @@ import bitxos.neurons.vision as vision
 import bitxos.neurons.action as action
 from bitxos.genomes.genoma import Genoma
 from bitxos.world.world import World
+import bitxos.neurons.networks as networks
+import pprint
+import numpy as np
 
 
 class Organism:
@@ -15,7 +18,7 @@ class Organism:
         self.energy = None
         self.damage = 0
         self.age = 0
-        self.last_fight_at = None
+        self.last_fight_at = 0
         self.memory = []
 
     @property
@@ -45,6 +48,7 @@ class Organism:
         new_organism.x = random.randint(0, consts.WORLD_WIDTH)
         new_organism.y = random.randint(0, consts.WORLD_HEIGHT)
         new_organism.age = 0
+        new_organism.last_fight_at = 0
         return new_organism
 
     def get_clone(self):
@@ -67,8 +71,8 @@ class Organism:
         new_organism = Organism()
         new_organism.energy = self.energy // 4  # TODO: calculate better the energy to give
         self.energy -= new_organism.energy
-        new_organism.x = self.x + random.randint(-10, 10)  # TODO: think about this 
-        new_organism.y = self.y + random.randint(-10, 10)  # TODO: think about this
+        new_organism.x = self.x + random.randint(-10, 10)  # TODO: improve 
+        new_organism.y = self.y + random.randint(-10, 10)  # TODO: improve
         new_organism.age = 0
         return new_organism
 
@@ -76,51 +80,74 @@ class Organism:
         """Returns the distance to the organism"""
         return round(math.hypot(self.x - organism.x, self.y - organism.y))
 
+    def angle(self, organism):
+        """Returns the relative angle to the organism in radians"""
+        return round(math.atan2(self.x - organism.x, self.y - organism.y))
+
     def get_quadrants_view(self):
-        """Returns 16 quadrants: 8 near + 8 far areas, each with a tuple of its elements"""
+        """Returns N quadrants with organisms"""
         world = World.getWorld()
-        orgs_near, orgs_far = world.get_organism_at_distances(self, 20, 200)
+        orgs = world.get_organism_at_distance(self, 200)
+        quadrants = self._classify_in_quadrants( orgs ) # list of quadrants with list of organism objects
         
-        organism_in_quadrants_near = self._classify_in_quadrants(orgs_near)
-        organism_in_quadrants_far = self._classify_in_quadrants(orgs_far)
-        quadrants_near = [vision.quadrant_analysis(q, None) for q in organism_in_quadrants_near]
-        quadrants_far = [vision.quadrant_analysis(q, None) for q in organism_in_quadrants_far]
+        network_organism_classification = networks._get_general_network( 7, 8, 0)  #TODO: number of org types, move to consts
+        networks._set_weights( network_organism_classification, self.genoma.genes.organism_classification_neurons) 
         
-        return quadrants_near, quadrants_far
+        network_quadrant_classification = networks._get_general_network( 8*2, 4, 1) #TODO: number of quadrant types, move to consts
+        networks._set_weights( network_quadrant_classification, self.genoma.genes.quadrant_classification_neurons)
+
+        # pp = pprint.PrettyPrinter(indent=4)
+        # print("quadrants")
+        # pp.pprint(quadrants)
+        quadrants_classified = []
+        for n in range(10): #TODO: change by const
+            quad = dict()
+            if n in quadrants.keys():
+                for (org, dist) in quadrants[n]:  # convert tuple (org,dist) to dict {org_type: [list of dists]}
+                    org_type = vision.organism_classify( org, network_organism_classification)
+                    if org_type in quad.keys():
+                        quad[org_type].append(dist)
+                    else:
+                        quad[org_type] = [dist]
+            else:
+                quad = None #TODO: create a dict with all org types to empty. There is nobody there.
+
+            # print("quadrants[quadrant]", quadrants[quadrant])
+            # print("quad", quad)
+            if quad:
+                quad_res = vision.quadrant_classify( quad, network_quadrant_classification) # quadrant type value calculated by the network 
+            else:
+                quad_res = 0
+            # print("quad_res", quad_res)
+            quadrants_classified.append( quad_res )
+
+        # print("quadrants", quadrants.keys())
+        # print("quadrants_classified", quadrants_classified)
+        return quadrants_classified
 
     def get_actions(self):
         """Returns the next action to do based in the situation in the quadrants around and in the current internal state.
            Returns also the new state.
         """
-        q_near, q_far = self.get_quadrants_view()
-        # print("q_near", q_near)
-        # print("q_far", q_far)
-        actions, new_state = action.get_actions(q_near, q_far, self.state, self.memory)
-        return [], []
+        quadrants = self.get_quadrants_view()
+
+        network_actions = networks._get_general_network( 10+4, 4, 0) #TODO: number of quadrant types, move to consts
+        networks._set_weights( network_actions, self.genoma.genes.action_neurons)
+
+        actions, new_state = action.get_actions( quadrants, self.state, self.memory, network_actions)
+        return actions, new_state
 
     def _classify_in_quadrants(self, orgs):
-        q_N, q_NE, q_E, q_SE, q_S, q_SW, q_NW, q_W = [], [], [], [], [], [], [], []
-        for o in orgs:  # TODO: improve...
-            if o.y >= self.y:
-                if o.x >= self.x:
-                    if (o.y - self.y) >= (o.x - self.x):
-                        q_N.append(o)
-                    else:
-                        q_NE.append(o)
-                else:
-                    if (o.y - self.y) >= (self.x - o.x):
-                        q_NW.append(o)
-                    else:
-                        q_W.append(o)
+        num_quadrants = 10 # TODO: global or genoma var (?)
+        
+        quadrant_angle = math.pi * 2 / num_quadrants
+        quadrants = dict()
+        for org in orgs:  # TODO: improve...
+            angle = self.angle( org[0] ) + math.pi # organism is the 1st element in the tuple. The second is distance.
+            quadrant = math.floor(angle / quadrant_angle)
+            if quadrant in quadrants.keys():
+                quadrants[quadrant].append( org )
             else:
-                if o.x >= self.x:
-                    if (o.y - self.y) >= (o.x - self.x):
-                        q_E.append(o)
-                    else:
-                        q_SE.append(o)
-                else:
-                    if (o.y - self.y) >= (self.x - o.x):
-                        q_SW.append(o)
-                    else:
-                        q_S.append(o)
-        return q_N, q_NE, q_E, q_SE, q_S, q_SW, q_NW, q_W
+                quadrants[quadrant]= [ org ]
+        #print("_classify_in_quadrants: ", quadrants)
+        return quadrants

@@ -11,6 +11,7 @@ flake8 = "*"
 numpy = "*"
 keras = "*"
 tensorflow = "*"
+pyglet = "*"
 
 [requires]
 python_version = "3.7"

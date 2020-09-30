@@ -15,8 +15,7 @@ Genes = collections.namedtuple('Genes', [
 #    'aggressivity', # part of the genoma behaviour
 
     'organism_classification_neurons', 
-    'vision_short_neurons', 
-    'vision_long_neurons', 
+    'quadrant_classification_neurons', 
     'action_neurons', 
 ])
 
@@ -40,10 +39,9 @@ class Genoma():
             random.randint(0, 100),     # graze_units - 
 #            random.randint(0, 100),     # aggressivity - 
 
-            networks.get_random_neurons_array(7,3,0),   # organism_classification_neurons -
-            networks.get_random_neurons_array(8,3,1),   # vision_short_neurons -
-            networks.get_random_neurons_array(8,3,1),   # vision_long_neurons -
-            networks.get_random_neurons_array(8,3,1),   # action_neurons -
+            networks.get_random_neurons_array( 7, 8, 0),   # organism_classification_neurons -
+            networks.get_random_neurons_array( 8*2, 4, 1),   # quadrant_classification_neurons -
+            networks.get_random_neurons_array( 10+4, 4, 0),   # action_neurons -
         )
         new_genoma.hash = new_genoma.get_genes_hash()
         return new_genoma
@@ -91,5 +89,5 @@ def _mutate_layer(layer):
 def _mutate_group(group):
     group_list = list(group)
     elem_to_mutate = random.randrange(len(group_list))
-    group_list[elem_to_mutate] = group_list[elem_to_mutate] * (random.choice([0.9,1.1])) # TODO: improve, extract const
+    group_list[elem_to_mutate] = group_list[elem_to_mutate] * (random.choice([0.9,1.1])) # TODO: improve, extract const, check that is between 0 and 1
     return tuple(group_list)

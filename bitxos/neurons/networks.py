@@ -5,20 +5,20 @@ from keras.models import Sequential
 from keras.layers import Dense
 
 
-def _get_multiclassification_network(inputs_len, outputs_len, hidden_layers):
+def _get_multiclassification_network(inputs_len, outputs_len, num_hidden_layers):
     """Returns a multiclass classification neural network.        
         Only one output should be right e.g. direction to move. Sum of all outputs is 1"""
-    return _get_neural_network(inputs_len, outputs_len, hidden_layers, 'softmax')
+    return _get_neural_network(inputs_len, outputs_len, num_hidden_layers, 'softmax')
 
-def _get_general_network(inputs_len, outputs_len, hidden_layers):
+def _get_general_network(inputs_len, outputs_len, num_hidden_layers):
     """Returns a 'sigmoid' neural network.        
-        Several outputs can be true e.g.  types of organisms seen around. Sum of all outputs is not 1"""
-    return _get_neural_network(inputs_len, outputs_len, hidden_layers, 'sigmoid')
+        Several outputs can be true e.g. types of organisms seen around. Sum of all outputs is not 1"""
+    return _get_neural_network(inputs_len, outputs_len, num_hidden_layers, 'sigmoid')
 
 
-models = {} # one per number of hidden layers
+models = dict() # one per number of hidden layers
 
-def _get_neural_network(inputs_len, outputs_len, hidden_layers, output_activation):
+def _get_neural_network(inputs_len, outputs_len, num_hidden_layers, output_activation):
     """Returns a neural network with the shape: 
         inputs, outputs, number hidden layers (without input and output layers)
         and the activation fuction for the output:
@@ -27,25 +27,25 @@ def _get_neural_network(inputs_len, outputs_len, hidden_layers, output_activatio
         """
     
     global models    # TODO: check singleton...
-    if hidden_layers not in models: 
-        models[hidden_layers] = Sequential() 
-        if hidden_layers == 0:
+    if num_hidden_layers not in models:
+        models[num_hidden_layers] = Sequential() 
+        if num_hidden_layers == 0:
             layer = Dense(outputs_len, input_dim=inputs_len, activation='softmax', kernel_initializer='zeros')
-            models[hidden_layers].add(layer)
-        elif hidden_layers == 1:
+            models[num_hidden_layers].add(layer)
+        elif num_hidden_layers == 1:
             layer = Dense(inputs_len, input_dim=inputs_len, activation='relu', kernel_initializer='zeros')  # we keep same input params lenght in the hidden layer
             layer_out = Dense(outputs_len, activation='softmax', kernel_initializer='zeros')
-            models[hidden_layers].add(layer)
-            models[hidden_layers].add(layer_out)
-        elif hidden_layers == 2:
+            models[num_hidden_layers].add(layer)
+            models[num_hidden_layers].add(layer_out)
+        elif num_hidden_layers == 2:
             layer = Dense(inputs_len, input_dim=inputs_len, activation='relu', kernel_initializer='zeros')  # we keep same input params lenght in the hidden layer
             layer_2 = Dense(inputs_len, activation='relu', kernel_initializer='zeros')
             layer_out = Dense(outputs_len, activation='softmax', kernel_initializer='zeros')
-            models[hidden_layers].add(layer)
-            models[hidden_layers].add(layer_2)
-            models[hidden_layers].add(layer_out)
+            models[num_hidden_layers].add(layer)
+            models[num_hidden_layers].add(layer_2)
+            models[num_hidden_layers].add(layer_out)
         else: raise Exception('No more than 2 hidden layers so far')
-    return models[hidden_layers]
+    return models[num_hidden_layers]
 
 def _set_weights(model, weights):
     """load the weights in the neural network
@@ -80,18 +80,18 @@ def _set_weights(model, weights):
 
 def _predict(model, inputs):
     res = model.predict(inputs)
-    # print("_predict res:",res)
+    # print("_predict res:",res, "** res **", list(res[0]).index(max(res[0])))
     return list(res[0]).index(max(res[0]))
 
-def get_random_neurons_array(inputs_len, outputs_len, hidden_layers):
+def get_random_neurons_array(inputs_len, outputs_len, num_hidden_layers):
     rands_2 = tuple(random.random() for _ in range(outputs_len))
     l_2 = tuple(rands_2 for _ in range(inputs_len+1))
-    if hidden_layers == 0:
-        return (l_2,)  # hidden_layers == 0
-    if hidden_layers == 1:
+    if num_hidden_layers == 0:
+        return (l_2,)  # num_hidden_layers == 0
+    if num_hidden_layers == 1:
         rands_1 = tuple(random.random() for _ in range(inputs_len))
         l_1 = tuple(rands_1 for _ in range(inputs_len+1))
         return (l_1, l_2)
-    raise Exception("Only ready for 0 or 1 hidden layer, sorry")
+    raise Exception("Only ready for 0 or 1 hidden layer, so far")
 
     

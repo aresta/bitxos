@@ -3,7 +3,7 @@ import pyglet
 from bitxos.genomes.genoma import Genoma
 from bitxos.organisms.organism import Organism
 from bitxos.world.world import World
-
+import pprint
 
 window = pyglet.window.Window(1000, 1000)
 batch = pyglet.graphics.Batch()
@@ -11,18 +11,31 @@ vertex = []
 blau = (0, 0, 255)
 vermell = (255, 0, 0)
 
-w = World.getWorld()
-last_organism = Organism.get_random()
+world = World.getWorld()
 
-for i in range(500):
-    w.organisms.append(last_organism)
-    last_organism = last_organism.get_clone()
+for _ in range(10):
+    world.organisms.append( Organism.get_random() )
+
+pp = pprint.PrettyPrinter(indent=4)
+for n in range(5):
+    to_add = []
+    for org in world.organisms:
+        print("org", org)
+        # pp.pprint( org.genoma.genes.organism_classification_neurons )     
+        # pp.pprint( org.get_mutated_copy().genoma.genes.organism_classification_neurons )     
+        print(org.get_actions())
+        print(". . . . . . . . . . .")
+        i = random.randint(0, len(world.organisms)-1)
+        to_add.append( world.organisms[i].get_mutated_copy())
+    world.organisms.extend( to_add)
+    print("+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-", n)
+    
 
 v1 = []
 c = []
-for o in w.organisms:
-    v1.append(o.x)
-    v1.append(o.y)
+for organism in world.organisms:
+    v1.append(organism.x)
+    v1.append(organism.y)
     c.append(random.randint(20, 255))
     c.append(random.randint(20, 255))
     c.append(random.randint(20, 255))
